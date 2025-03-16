@@ -2,7 +2,7 @@
 #include <thread>
 #include <vector>
 
-#include "include/MemoryPool.h"
+#include "../include/MemoryPool.h"
 
 using namespace Memory_Pool;
 
@@ -60,7 +60,7 @@ void BenchmarkMemoryPool(size_t ntimes, size_t nworks, size_t rounds)
     {
         t.join();
     }
-    printf("&lu个线程并发执行%lu轮次，每轮次newElement&deleteElement %lu次，总计花费：%lu ms\n", nworks, rounds, ntimes, total_costtimes);
+    printf("%lu个线程并发执行%lu轮次，每轮次newElement&deleteElement %lu次，总计花费：%lu ms\n", nworks, rounds, ntimes, total_costtimes);
 }
 
 void BenchmarkNew(size_t ntimes, size_t nworks, size_t rounds)

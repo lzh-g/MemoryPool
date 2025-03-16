@@ -19,7 +19,7 @@ file(GLOB TEST_FILES "test/*.cpp")
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${TEST_FILES})
 
 # Add compile options
-target_compile_options(${PROJECT_NAME} PRIVATE -g pthread)
+target_compile_options(${PROJECT_NAME} PRIVATE -g)
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} pthread)
