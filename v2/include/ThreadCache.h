@@ -35,6 +35,7 @@ namespace Memory_Pool
         // 归还内存到中心缓存
         void returnToCentralCache(void *start, size_t size);
 
+        // 判断是否应该将内存回收给中心缓存
         bool shouldReturnToCentralCache(size_t index);
 
     private:
