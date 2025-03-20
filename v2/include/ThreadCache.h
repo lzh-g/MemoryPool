@@ -11,6 +11,7 @@ namespace Memory_Pool
         // 单例模式
         static ThreadCache *getInstance()
         {
+            // thread_local用于声明 线程局部存储 的变量，thread_local变量在每个线程中都有独立的实例
             static thread_local ThreadCache instance;
             return &instance;
         }

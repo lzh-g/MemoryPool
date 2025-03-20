@@ -1,6 +1,7 @@
+#include <stdlib.h>
+
 #include "../include/ThreadCache.h"
 #include "../include/CentralCache.h"
-#include "ThreadCache.h"
 
 namespace Memory_Pool
 {
@@ -30,10 +31,10 @@ namespace Memory_Pool
         {
             // 将freeList_[index]指向的内存块的下一个内存块地址（取决于内存块的实现）
             /*
-            一个空闲内存块的结构可能为，这是一个嵌入式链表
-            +-------------------+-------------------+
-            | Next Block (void*)| 可用内存空间      |
-            +-------------------+-------------------+
+            一个空闲内存块的结构可能如下，这是一个嵌入式链表
+            +------------------+-----------+
+            |Next Block (void*)|可用内存空间|
+            +------------------+-----------+
             先将ptr转换为一个void**指针。这意味着将ptr指向的内存块的前几个字节(sizeof(void*)大小)解释为一个void*指针；
             再解引用这个void**指针，获取ptr指向的内存块中存储的下一个空闲内存块地址
             */
@@ -63,7 +64,7 @@ namespace Memory_Pool
         // 更新自由链表大小
         freeListSize_[index]++; // 增加对应大小类的自由链表大小
 
-        // 判断是否需要将部分内存会后给中心缓存
+        // 判断是否需要将部分内存回收给中心缓存
         if (shouldReturnToCentralCache(index))
         {
             returnToCentralCache(freeList_[index], size);
@@ -85,7 +86,7 @@ namespace Memory_Pool
 
         // 更新自由链表大小
         size_t batchNum = 0;
-        // 从start开始遍历
+        // 从start开始遍历，因为这个函数在allocate处调用，那里已经让freeListSize_[index]--了，所以这个start也要算上
         void *current = start;
 
         // 计算从中心缓存获取的内存块数量
