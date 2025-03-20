@@ -9,18 +9,31 @@ namespace Memory_Pool
     class CentralCache
     {
     public:
+        // 单例模式
         static CentralCache &getInstance()
         {
             static CentralCache instance;
             return instance;
         }
 
+        // 获取一批内存块
         void *fetchRange(size_t index);
+        // 返回一批内存块
         void returnRange(void *start, size_t size, size_t bytes);
 
     private:
+        // 初始化所有原子指针为nullptr
         CentralCache()
         {
+            for (auto &ptr : centralFreeList_)
+            {
+                ptr.store(nullptr, std::memory_order_relaxed);
+            }
+            // 初始化所有锁
+            for (auto &lock : locks_)
+            {
+                lock.clear();
+            }
         }
 
         // 从页缓存获取内存
