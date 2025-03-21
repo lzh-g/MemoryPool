@@ -16,10 +16,10 @@ namespace Memory_Pool
             return instance;
         }
 
-        // 获取一批内存块
+        // 从中心缓存空闲链表获取一批内存块
         void *fetchRange(size_t index);
-        // 返回一批内存块
-        void returnRange(void *start, size_t size, size_t bytes);
+        // 返回一批内存块至中心缓存空闲链表
+        void returnRange(void *start, size_t size, size_t index);
 
     private:
         // 初始化所有原子指针为nullptr

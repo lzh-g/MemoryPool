@@ -77,6 +77,7 @@ namespace Memory_Pool
             }
             else
             {
+                // 中心缓存不为空
                 // 保存result的下一个节点
                 void *next = *reinterpret_cast<void **>(result);
                 // 将result与链表断开
@@ -97,11 +98,50 @@ namespace Memory_Pool
         return result;
     }
 
-    void CentralCache::returnRange(void *start, size_t size, size_t bytes)
+    void CentralCache::returnRange(void *start, size_t size, size_t index)
     {
+        // 当索引大于FREE_LIST_SIZE时，说明内存过大，直接向系统归还
+        if (!start || index >= FREE_LIST_SIZE)
+        {
+            return;
+        }
+
+        while (locks_[index].test_and_set(std::memory_order_acquire))
+        {
+            std::this_thread::yield();
+        }
+
+        try
+        {
+            // 尝试将归还的内存块插入中心缓存空闲链表
+            void *current = centralFreeList_[index].load(std::memory_order_relaxed);
+            *reinterpret_cast<void **>(start) = current;
+            centralFreeList_[index].store(start, std::memory_order_release);
+        }
+        catch (...)
+        {
+            locks_[index].clear(std::memory_order_release);
+            throw;
+        }
+
+        locks_[index].clear(std::memory_order_release);
     }
+
     void *CentralCache::fetchFromPageCache(size_t size)
     {
-        return nullptr;
+        // 计算实际需要的页数
+        size_t numPages = (size + PageCache::PAGE_SIZE - 1) / PageCache::PAGE_SIZE;
+
+        // 根据大小决定分配策略
+        if (size <= SPAN_PAGES * PageCache::PAGE_SIZE)
+        {
+            // 小于等于32KB的请求，是用固定8页
+            return PageCache::getInstance().allocateSpan(SPAN_PAGES);
+        }
+        else
+        {
+            // 大于32KB的请求，按实际需求分配
+            return PageCache::getInstance().allocateSpan(numPages);
+        }
     }
 } // namespace Memory_Pool
