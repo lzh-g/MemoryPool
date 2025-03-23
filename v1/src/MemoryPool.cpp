@@ -70,7 +70,7 @@ namespace Memory_Pool
 
     void MemoryPool::allocateNewBlock()
     {
-        std::cout << "申请一块内存块, SlotSize: " << SlotSize_ << std::endl;
+        std::cout << "申请一块内存块, SlotSize: " << SlotSize_ << "\n";
         // 头插法插入新的内存块
         void *newBlock = operator new(BlockSize_);
         reinterpret_cast<Slot *>(newBlock)->next = firstBlock_;

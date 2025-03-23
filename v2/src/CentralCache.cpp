@@ -1,8 +1,8 @@
 #include "../include/CentralCache.h"
+#include "../include/PageCache.h"
 
 #include <cassert>
 #include <thread>
-#include "CentralCache.h"
 
 namespace Memory_Pool
 {
@@ -38,7 +38,8 @@ namespace Memory_Pool
             {
                 // 若中心缓存为空，从页缓存批量获取新的内存块
                 size_t size = (index + 1) * ALIGNMENT;
-                result = fetchFromPageCache(size);
+                size_t numPages;
+                result = fetchFromPageCache(size, numPages);
 
                 if (!result)
                 {
@@ -51,7 +52,7 @@ namespace Memory_Pool
                 // !!这里将result转为char*是为了后续的算术运算，void*不支持算术运算操作(如void* + 1)，而char的大小固定为1字节，char*进行算术运算是以字节为单位进行的，若使用int*等类型，会以4字节为单位进行算术运算
                 char *start = static_cast<char *>(result);
                 // 计算根据当前块大小，需要分为几个内存块
-                size_t blockNum = (SPAN_PAGES * PageCache::PAGE_SIZE) / size;
+                size_t blockNum = (numPages * PageCache::PAGE_SIZE) / size;
 
                 // 确保至少有两个块才能构建链表
                 if (blockNum > 1)
@@ -127,15 +128,16 @@ namespace Memory_Pool
         locks_[index].clear(std::memory_order_release);
     }
 
-    void *CentralCache::fetchFromPageCache(size_t size)
+    void *CentralCache::fetchFromPageCache(size_t size, size_t &numPages)
     {
         // 计算实际需要的页数
-        size_t numPages = (size + PageCache::PAGE_SIZE - 1) / PageCache::PAGE_SIZE;
+        numPages = (size + PageCache::PAGE_SIZE - 1) / PageCache::PAGE_SIZE;
 
         // 根据大小决定分配策略
         if (size <= SPAN_PAGES * PageCache::PAGE_SIZE)
         {
             // 小于等于32KB的请求，是用固定8页
+            numPages = SPAN_PAGES;
             return PageCache::getInstance().allocateSpan(SPAN_PAGES);
         }
         else
