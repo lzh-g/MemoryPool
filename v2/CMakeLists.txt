@@ -11,9 +11,9 @@ add_compile_options(-Wall -O2)
 find_package(Threads REQUIRED)
 
 # 设置目录
-set(SRC_DIR $(CMAKE_SOURCE_DIR)/src)
-set(INC_DIR $(CMAKE_SOURCE_DIR)/include)
-set(TEST_DIR $(CMAKE_SOURCE_DIR)/test)
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
+set(INC_DIR ${CMAKE_SOURCE_DIR}/include)
+set(TEST_DIR ${CMAKE_SOURCE_DIR}/test)
 
 # 源文件
 file(GLOB SOURCES "${SRC_DIR}/*.cpp")
