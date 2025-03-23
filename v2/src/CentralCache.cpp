@@ -114,10 +114,19 @@ namespace Memory_Pool
 
         try
         {
+            // 找到要归还的链表的最后一个节点
+            void *end = start;
+            size_t count = 1;
+            while (*reinterpret_cast<void **>(end) != nullptr && count < size)
+            {
+                end = *reinterpret_cast<void **>(end);
+                ++count;
+            }
+
             // 尝试将归还的内存块插入中心缓存空闲链表
             void *current = centralFreeList_[index].load(std::memory_order_relaxed);
-            *reinterpret_cast<void **>(start) = current;
-            centralFreeList_[index].store(start, std::memory_order_release);
+            *reinterpret_cast<void **>(end) = current;                       // 将归还的内存块的最后一个节点连接到空闲链表表头
+            centralFreeList_[index].store(start, std::memory_order_release); // 将归还的链表头设置为新的链表头
         }
         catch (...)
         {

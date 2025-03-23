@@ -10,7 +10,8 @@ namespace Memory_Pool
     class PageCache
     {
     public:
-        static const size_t PAGE_SIZE = 4096; // 4K页大小
+        static const size_t PAGE_SIZE = 4096; // 页大小为4K
+        static const size_t RELEASE_THRESHOLD = 128;
 
         static PageCache &getInstance()
         {

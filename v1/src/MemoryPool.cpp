@@ -118,6 +118,7 @@ namespace Memory_Pool
             Slot *oldHead = freeLists_.load(std::memory_order_acquire);
             if (oldHead == nullptr)
             {
+                // 队列为空
                 return nullptr;
             }
 
@@ -129,6 +130,7 @@ namespace Memory_Pool
             }
             catch (...)
             {
+                // 若返回失败，则重新尝试申请内存
                 continue;
             }
 

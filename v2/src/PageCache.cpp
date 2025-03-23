@@ -126,10 +126,18 @@ namespace Memory_Pool
             }
         }
 
-        // 将合并后的span通过头插法插入空闲链表
-        auto &list = freeSpans_[span->numPages];
-        span->next = list;
-        list = span;
+        // 若span足够大，则归还操作系统，否则将合并后的span通过头插法插入空闲链表
+        if (span->numPages = RELEASE_THRESHOLD)
+        {
+            // 归还大块内存给操作系统
+            munmap(span->pageAddr, span->numPages * PAGE_SIZE);
+        }
+        else
+        {
+            auto &list = freeSpans_[span->numPages];
+            span->next = list;
+            list = span;
+        }
     }
 
     void *PageCache::systemAlloc(size_t numPages)
