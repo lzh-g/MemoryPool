@@ -10,10 +10,10 @@ namespace Memory_Pool
     // 每次从PageCache获取span大小（以页为单位）
     static const size_t SPAN_PAGES = 8;
 
-    void *Memory_Pool::CentralCache::fetchRange(size_t index)
+    void *Memory_Pool::CentralCache::fetchRange(size_t index, size_t batchNum)
     {
         // 索引检查，当索引≥FREE_LIST_SIZE时，说明申请内存过大，直接向系统申请
-        if (index >= FREE_LIST_SIZE)
+        if (index >= FREE_LIST_SIZE || batchNum == 0)
         {
             return nullptr;
         }
@@ -53,12 +53,13 @@ namespace Memory_Pool
                 char *start = static_cast<char *>(result);
                 // 计算根据当前块大小，需要分为几个内存块
                 size_t blockNum = (numPages * PageCache::PAGE_SIZE) / size;
+                size_t allocaBlocks = std::min(batchNum, blockNum);
 
                 // 确保至少有两个块才能构建链表
-                if (blockNum > 1)
+                if (allocaBlocks > 1)
                 {
                     // 将各个块连接起来
-                    for (size_t i = 1; i < blockNum; ++i)
+                    for (size_t i = 1; i < allocaBlocks; ++i)
                     {
                         void *current = start + (i - 1) * size;
 
@@ -66,26 +67,47 @@ namespace Memory_Pool
                         *reinterpret_cast<void **>(current) = next;
                     }
                     // 最后一个节点next置为空
+                    *reinterpret_cast<void **>(start + (allocaBlocks - 1) * size) = nullptr;
+                }
+
+                // 构建保留在CentralCache的链表
+                if (blockNum > allocaBlocks)
+                {
+                    void *remainStart = start + allocaBlocks * size;
+                    for (size_t i = allocaBlocks; i < blockNum; ++i)
+                    {
+                        void *current = start + (i - 1) * size;
+                        void *next = start + i * size;
+                        *reinterpret_cast<void **>(current) = next;
+                    }
                     *reinterpret_cast<void **>(start + (blockNum - 1) * size) = nullptr;
 
-                    // 保存result的下一个节点
-                    void *next = *reinterpret_cast<void **>(result);
-                    // 将result与链表断开
-                    *reinterpret_cast<void **>(result) = nullptr;
-                    // 更新中心缓存
-                    centralFreeList_[index].store(next, std::memory_order_release);
+                    centralFreeList_[index].store(remainStart, std::memory_order_release);
                 }
             }
             else
             {
                 // 中心缓存不为空
-                // 保存result的下一个节点
-                void *next = *reinterpret_cast<void **>(result);
-                // 将result与链表断开
-                *reinterpret_cast<void **>(result) = nullptr;
+                // 从现有链表中获取指定数量的块
+                void *current = result;
+                void *prev = nullptr;
+                size_t count = 0;
+
+                while (current && count < batchNum)
+                {
+                    prev = current;
+                    current = *reinterpret_cast<void **>(current);
+                    ++count;
+                }
+
+                if (prev)
+                {
+                    // 当前centralFreeList_[index]链表上的内存块大于batchNum需要的，截断
+                    *reinterpret_cast<void **>(prev) = nullptr;
+                }
 
                 // 更新中心缓存
-                centralFreeList_[index].store(next, std::memory_order_release);
+                centralFreeList_[index].store(current, std::memory_order_release);
             }
         }
         catch (...)

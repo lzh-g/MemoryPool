@@ -23,18 +23,16 @@ namespace Memory_Pool
         void deallocate(void *ptr, size_t size);
 
     private:
-        ThreadCache()
-        {
-            // 初始化自由链表和大小统计
-            freeList_.fill(nullptr);
-            freeListSize_.fill(0);
-        }
+        ThreadCache() = default;
 
         // 从中心缓存获取内存
         void *fetchFromCentralCache(size_t index);
 
         // 归还内存到中心缓存
         void returnToCentralCache(void *start, size_t size);
+
+        // 计算批量获取内存块的数量
+        size_t getBatchNum(size_t size);
 
         // 判断是否应该将内存回收给中心缓存
         bool shouldReturnToCentralCache(size_t index);

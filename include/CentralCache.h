@@ -17,7 +17,7 @@ namespace Memory_Pool
         }
 
         // 从中心缓存空闲链表获取一批内存块
-        void *fetchRange(size_t index);
+        void *fetchRange(size_t index, size_t batchNum);
         // 返回一批内存块至中心缓存空闲链表
         void returnRange(void *start, size_t size, size_t index);
 
